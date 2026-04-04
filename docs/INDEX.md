@@ -11,6 +11,7 @@ This repo is the **foraging orchestrator** that binds a richer extraction backen
 5. `../specs/event-and-storage-flow.md` — how page events move into Proxx/OpenPlanner surfaces
 6. `../specs/checkpoint-and-recovery.md` — checkpoint intent and current gap
 7. `../specs/deployment-lattice.md` — compose/env/dependency shape
+8. `SEED_CATALOG.md` — curated seed sets for Knoxx / Proxx websearch bootstrap
 
 ## Position in the family
 
