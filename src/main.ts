@@ -15,11 +15,20 @@ async function main() {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const openPlannerBaseUrl = env("OPENPLANNER_BASE_URL", "http://localhost:7777");
+  const openPlannerApiKey = env("OPENPLANNER_API_KEY", "change-me");
+  const proxxBaseUrl = env("PROXX_BASE_URL", "");
+  const proxxAuthToken = env("PROXX_AUTH_TOKEN", "");
+
   const myrmex = new Myrmex({
     shuvCrawlBaseUrl: env("SHUVCRAWL_BASE_URL", "http://localhost:3777"),
     shuvCrawlToken: env("SHUVCRAWL_TOKEN"),
-    proxxBaseUrl: env("PROXX_BASE_URL", "http://localhost:8789"),
-    proxxAuthToken: env("PROXX_AUTH_TOKEN", "dev-token"),
+    proxxBaseUrl,
+    proxxAuthToken,
+    openPlannerBaseUrl,
+    openPlannerApiKey,
+    project: env("MYRMEX_PROJECT", "knoxx-graph"),
+    source: env("MYRMEX_SOURCE", "myrmex"),
     ants: parseInt(env("MYRMEX_ANTS", "4"), 10),
     dispatchIntervalMs: parseInt(env("MYRMEX_DISPATCH_INTERVAL_MS", "15000"), 10),
     maxFrontier: parseInt(env("MYRMEX_MAX_FRONTIER", "20000"), 10),

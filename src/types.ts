@@ -51,6 +51,12 @@ export interface MyrmexConfig {
   proxxBaseUrl: string;
   proxxAuthToken: string;
 
+  openPlannerBaseUrl?: string;
+  openPlannerApiKey?: string;
+
+  project?: string;
+  source?: string;
+
   includePatterns?: string[];
   excludePatterns?: string[];
   maxContentLength?: number;

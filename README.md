@@ -23,6 +23,23 @@
 
 Prototype package extracted from the devel workspace.
 
+## Runtime configuration
+
+Primary lake path now targets OpenPlanner directly so Myrmex can write into the
+same lake Knoxx already uses:
+
+- `OPENPLANNER_BASE_URL` — default `http://localhost:7777`
+- `OPENPLANNER_API_KEY` — default `change-me`
+
+Legacy/future compatibility:
+
+- `PROXX_BASE_URL`
+- `PROXX_AUTH_TOKEN`
+
+If `OPENPLANNER_BASE_URL` is set, Myrmex writes graph events to
+`POST /v1/events`. Otherwise it falls back to the planned Proxx lake surface at
+`POST /api/v1/lake/events`.
+
 ## Adjacent repos
 
 - `octave-commons/graph-weaver-aco` — traversal brain

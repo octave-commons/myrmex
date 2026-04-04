@@ -2,7 +2,6 @@ import type { MyrmexConfig, MyrmexEvent, MyrmexStats } from "./types.js";
 import type { FetchBackend } from "./fetch-backend.js";
 import { ShuvCrawlClient } from "./shuvcrawl-client.js";
 import { ShuvCrawlFetchBackend } from "./shuvcrawl-backend.js";
-import { EventRouter } from "./event-router.js";
 import { GraphStore } from "./graph-store.js";
 import { CheckpointManager } from "./checkpoint.js";
 
@@ -31,10 +30,10 @@ export class Myrmex {
   private readonly config: Required<MyrmexConfig>;
   private readonly shuvCrawl: ShuvCrawlClient;
   private weaver: WeaverInstance | null = null;
-  private readonly eventRouter: EventRouter;
   private readonly graphStore: GraphStore;
   private readonly checkpoint: CheckpointManager;
   private readonly listeners = new Set<(ev: MyrmexEvent) => void>();
+  private readonly pendingSeeds = new Set<string>();
   private running = false;
   private paused = false;
   private pageCount = 0;
@@ -53,6 +52,10 @@ export class Myrmex {
       shuvCrawlToken: config.shuvCrawlToken ?? "",
       proxxBaseUrl: config.proxxBaseUrl,
       proxxAuthToken: config.proxxAuthToken,
+      openPlannerBaseUrl: config.openPlannerBaseUrl ?? "",
+      openPlannerApiKey: config.openPlannerApiKey ?? "",
+      project: config.project ?? "knoxx-graph",
+      source: config.source ?? "myrmex",
       includePatterns: config.includePatterns ?? [],
       excludePatterns: config.excludePatterns ?? [],
       maxContentLength: config.maxContentLength ?? 500_000,
@@ -66,17 +69,13 @@ export class Myrmex {
       token: this.config.shuvCrawlToken || undefined,
     });
 
-    this.eventRouter = new EventRouter({
-      proxxBaseUrl: this.config.proxxBaseUrl,
-      authToken: this.config.proxxAuthToken,
-      includePatterns: this.config.includePatterns,
-      excludePatterns: this.config.excludePatterns,
-      maxContentLength: this.config.maxContentLength,
-    });
-
     this.graphStore = new GraphStore({
+      openPlannerBaseUrl: this.config.openPlannerBaseUrl,
+      openPlannerApiKey: this.config.openPlannerApiKey,
       proxxBaseUrl: this.config.proxxBaseUrl,
       authToken: this.config.proxxAuthToken,
+      project: this.config.project,
+      source: this.config.source,
     });
 
     this.checkpoint = new CheckpointManager({
@@ -85,6 +84,11 @@ export class Myrmex {
   }
 
   seed(urls: string[]): void {
+    for (const url of urls) {
+      if (url) {
+        this.pendingSeeds.add(url);
+      }
+    }
     if (this.weaver) {
       this.weaver.seed(urls);
     }
@@ -170,6 +174,10 @@ export class Myrmex {
     });
 
     this.wireEvents(weaver);
+    const seeds = [...this.pendingSeeds];
+    if (seeds.length > 0) {
+      weaver.seed(seeds);
+    }
     return weaver;
   }
 
@@ -191,7 +199,6 @@ export class Myrmex {
           graphNodeId: `node:${ev.url}`,
           fetchedAt: ev.fetchedAt,
         };
-        this.eventRouter.route(myrmexEvent).catch(() => {});
         this.graphStore.storeNode(myrmexEvent).catch(() => {});
         for (const target of ev.outgoing ?? []) {
           this.graphStore.storeEdge(ev.url, target).catch(() => {});
