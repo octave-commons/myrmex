@@ -50,7 +50,14 @@ Fork Tales had explicit feed-entry extraction for RSS/Atom/JSON Feed; this extra
 - `https://arxiv.org/list/cs.AI/recent`
 - `https://arxiv.org/list/cs.LG/recent`
 - `https://arxiv.org/list/cs.CR/recent`
+- `https://krebsonsecurity.com/`
+- `https://openssf.org/blog/`
+
+### Optional exploratory seeds (high-fanout / noisy)
+
 - `https://en.wikipedia.org/wiki/Artificial_intelligence`
+  - useful for aggressive concept expansion
+  - noisy in the current runtime because it fans out into interlanguage and Wikimedia surfaces
 
 ### Workspace-derived public corpus
 
@@ -112,7 +119,8 @@ https://github.com/shuv1337/shuvcrawl/issues,
 https://arxiv.org/list/cs.AI/recent,
 https://arxiv.org/list/cs.LG/recent,
 https://arxiv.org/list/cs.CR/recent,
-https://en.wikipedia.org/wiki/Artificial_intelligence,
+https://krebsonsecurity.com/,
+https://openssf.org/blog/,
 https://riatzukiza.github.io/
 ```
 

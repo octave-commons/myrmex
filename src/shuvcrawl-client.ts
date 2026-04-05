@@ -9,10 +9,23 @@ export interface ShuvCrawlScrapeOptions {
   onlyMainContent?: boolean;
 }
 
+export interface ShuvCrawlDiscoveredLink {
+  url: string;
+  source: "page" | "sitemap";
+  text: string | null;
+  rel: string | null;
+  context?: string | null;
+  domPath?: string | null;
+  blockSignature?: string | null;
+  blockRole?: string | null;
+}
+
 export interface ShuvCrawlScrapeResult {
   url: string;
+  originalUrl?: string;
   content: string;
   html?: string;
+  rawHtml?: string;
   metadata: {
     requestId: string;
     title?: string;
@@ -23,12 +36,36 @@ export interface ShuvCrawlScrapeResult {
     publishedAt?: string;
   };
   links?: string[];
+  linkDetails?: ShuvCrawlDiscoveredLink[];
 }
 
 export interface ShuvCrawlMapResult {
   url: string;
-  links: string[];
+  originalUrl?: string;
+  finalUrl?: string;
+  discovered?: ShuvCrawlDiscoveredLink[];
+  links?: string[];
   sitemaps?: string[];
+  summary?: {
+    discoveredCount: number;
+    filteredCount: number;
+    bypassMethod: "fast-path" | "bpc-extension" | "direct";
+    browserUsed: boolean;
+    elapsed: number;
+  };
+}
+
+export interface ShuvCrawlMapOptions {
+  noFastPath?: boolean;
+  noBpc?: boolean;
+  include?: string[];
+  exclude?: string[];
+  sameOriginOnly?: boolean;
+  source?: "links" | "sitemap" | "both";
+  wait?: "load" | "networkidle" | "selector" | "sleep";
+  waitFor?: string;
+  waitTimeout?: number;
+  sleep?: number;
 }
 
 export interface ShuvCrawlClientConfig {
@@ -60,10 +97,10 @@ export class ShuvCrawlClient {
     return json.data;
   }
 
-  async map(url: string): Promise<ShuvCrawlMapResult> {
+  async map(url: string, options?: ShuvCrawlMapOptions): Promise<ShuvCrawlMapResult> {
     const res = await this.fetch("/map", {
       method: "POST",
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, options: options ?? {} }),
     });
     const json = await res.json() as { success: boolean; data: ShuvCrawlMapResult; error?: string };
     if (!json.success) {

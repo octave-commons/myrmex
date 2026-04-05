@@ -1,3 +1,14 @@
+export interface DiscoveredLink {
+  url: string;
+  source?: "page" | "sitemap" | "feed";
+  text?: string | null;
+  rel?: string | null;
+  context?: string | null;
+  domPath?: string | null;
+  blockSignature?: string | null;
+  blockRole?: string | null;
+}
+
 export interface FetchResult {
   url: string;
   status: number;
@@ -7,6 +18,7 @@ export interface FetchResult {
   title?: string;
   metadata?: Record<string, unknown>;
   outgoing?: string[];
+  outgoingLinks?: DiscoveredLink[];
   error?: string;
 }
 
