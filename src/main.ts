@@ -15,10 +15,22 @@ async function main() {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const openPlannerBaseUrl = env("OPENPLANNER_BASE_URL", "http://localhost:7777");
-  const openPlannerApiKey = env("OPENPLANNER_API_KEY", "change-me");
-  const proxxBaseUrl = env("PROXX_BASE_URL", "");
-  const proxxAuthToken = env("PROXX_AUTH_TOKEN", "");
+  const openPlannerBaseUrl = env("OPENPLANNER_BASE_URL", "").trim();
+  const openPlannerApiKey = env("OPENPLANNER_API_KEY", "").trim();
+  const proxxBaseUrl = env("PROXX_BASE_URL", "").trim();
+  const proxxAuthToken = env("PROXX_AUTH_TOKEN", "").trim();
+  if (openPlannerBaseUrl && !openPlannerApiKey) {
+    console.error("OPENPLANNER_API_KEY is required when OPENPLANNER_BASE_URL is set");
+    process.exit(1);
+  }
+  if (proxxBaseUrl && !proxxAuthToken) {
+    console.error("PROXX_AUTH_TOKEN is required when PROXX_BASE_URL is set");
+    process.exit(1);
+  }
+  if (!openPlannerBaseUrl && !proxxBaseUrl) {
+    console.error("Configure either OPENPLANNER_BASE_URL or PROXX_BASE_URL before starting Myrmex");
+    process.exit(1);
+  }
   const includePatterns = (env("MYRMEX_INCLUDE_PATTERNS", "") || "")
     .split(",")
     .map((s) => s.trim())

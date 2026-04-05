@@ -260,6 +260,7 @@ export class GraphStore {
         const text = clipText(await response.text().catch(() => ""));
         if (this.isTransientResponse(response.status, text)) {
           this.noteFailure(`write ${response.status}: ${text || "transient upstream failure"}`, attempt);
+          await this.waitForWritable();
           continue;
         }
 
@@ -269,6 +270,7 @@ export class GraphStore {
           throw error instanceof Error ? error : new Error(String(error));
         }
         this.noteFailure(`write transport error: ${toErrorMessage(error)}`, attempt);
+        await this.waitForWritable();
       }
     }
   }
