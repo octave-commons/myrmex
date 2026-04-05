@@ -84,12 +84,7 @@ async function main() {
   // Log stats every 30s
   setInterval(() => {
     const s = myrmex.stats();
-    const backpressure = s.graphBackpressure.active
-      ? `backpressure(wait=${s.graphBackpressure.waitMs}ms streak=${s.graphBackpressure.streak}${s.graphBackpressure.reason ? ` reason=${s.graphBackpressure.reason}` : ""})`
-      : "backpressure(clear)";
-    console.log(
-      `[myrmex] stats: running=${s.running} paused=${s.paused}${s.pauseReason ? ` pauseReason=${JSON.stringify(s.pauseReason)}` : ""} frontier=${s.frontierSize} inFlight=${s.inFlight} pages=${s.pageCount} errors=${s.errorCount} pendingWrites=${s.pendingGraphWrites} ${backpressure}`,
-    );
+    console.log(`[myrmex] stats: ${formatStats(s)}`);
   }, 30_000);
 
   // Graceful shutdown
@@ -100,6 +95,14 @@ async function main() {
       process.exit(0);
     });
   }
+}
+
+function formatStats(s: ReturnType<typeof Myrmex.prototype.stats>): string {
+  const backpressure = s.graphBackpressure.active
+    ? `backpressure(wait=${s.graphBackpressure.waitMs}ms streak=${s.graphBackpressure.streak}${s.graphBackpressure.reason ? ` reason=${s.graphBackpressure.reason}` : ""})`
+    : "backpressure(clear)";
+  const pauseInfo = s.pauseReason ? ` pauseReason=${JSON.stringify(s.pauseReason)}` : "";
+  return `running=${s.running} paused=${s.paused}${pauseInfo} frontier=${s.frontierSize} inFlight=${s.inFlight} pages=${s.pageCount} errors=${s.errorCount} pendingWrites=${s.pendingGraphWrites} ${backpressure}`;
 }
 
 main().catch((err) => {

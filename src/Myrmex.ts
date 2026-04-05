@@ -74,8 +74,8 @@ export class Myrmex {
       startupJitterMs: config.startupJitterMs ?? 750,
       shuvCrawlBaseUrl: config.shuvCrawlBaseUrl,
       shuvCrawlToken: config.shuvCrawlToken ?? "",
-      proxxBaseUrl: config.proxxBaseUrl,
-      proxxAuthToken: config.proxxAuthToken,
+      proxxBaseUrl: config.proxxBaseUrl ?? "",
+      proxxAuthToken: config.proxxAuthToken ?? "",
       openPlannerBaseUrl: config.openPlannerBaseUrl ?? "",
       openPlannerApiKey: config.openPlannerApiKey ?? "",
       project: config.project ?? "web",
@@ -139,6 +139,7 @@ export class Myrmex {
     }
     this.running = true;
     this.ensureFlowControlLoop();
+    this.updateFlowControl();
     if (!this.paused) {
       this.weaver.start();
     }
@@ -174,8 +175,11 @@ export class Myrmex {
     this.managedPauseKey = null;
     this.running = true;
     this.ensureFlowControlLoop();
+    this.updateFlowControl();
     if (this.weaver) {
-      this.weaver.start();
+      if (!this.paused) {
+        this.weaver.start();
+      }
     }
   }
 
@@ -270,7 +274,7 @@ export class Myrmex {
             ...(ev.metadata ?? {}),
             status: ev.status !== undefined && ev.status >= 200 && ev.status < 400 ? "success" : "partial",
           },
-          outgoing: discoveredLinks.map((link) => link.url),
+          outgoing: [...new Set(discoveredLinks.map((link) => link.url))],
           outgoingLinks: discoveredLinks,
           graphNodeId: `node:${ev.url}`,
           fetchedAt: ev.fetchedAt,
@@ -373,9 +377,9 @@ export class Myrmex {
       return;
     }
 
-    if (this.paused && this.managedPauseKey && this.pendingGraphWrites <= this.config.openPlannerResumePendingWrites) {
+    if (this.paused && this.managedPauseKey && effectivePendingWrites <= this.config.openPlannerResumePendingWrites) {
       this.leaveManagedPause(
-        `OpenPlanner recovered and graph queue drained: pending=${this.pendingGraphWrites} resume<=${this.config.openPlannerResumePendingWrites}`,
+        `OpenPlanner recovered and graph queue drained: pending=${this.pendingGraphWrites} inFlight=${weaverStats.inFlight} effective=${effectivePendingWrites} resume<=${this.config.openPlannerResumePendingWrites}`,
       );
     }
   }
@@ -414,7 +418,8 @@ export class Myrmex {
   }
 
   private normalizeDiscoveredLinks(ev: WeaverEvent): MyrmexDiscoveredLink[] {
-    const byUrl = new Map<string, MyrmexDiscoveredLink>();
+    const receipts: MyrmexDiscoveredLink[] = [];
+    const fallbackUrls = new Set<string>();
 
     const push = (raw: {
       url: string;
@@ -428,25 +433,31 @@ export class Myrmex {
     }) => {
       const url = String(raw.url ?? "").trim();
       if (!url) return;
-      const existing = byUrl.get(url);
       const edgeType = this.isKnownVisited(url) ? "visited_to_visited" : "visited_to_unvisited";
-      byUrl.set(url, {
+      receipts.push({
         url,
         edgeType,
-        discoveryChannel: raw.source ?? existing?.discoveryChannel,
-        anchorText: raw.text ?? existing?.anchorText ?? null,
-        anchorContext: raw.context ?? existing?.anchorContext ?? null,
-        rel: raw.rel ?? existing?.rel ?? null,
-        domPath: raw.domPath ?? existing?.domPath ?? null,
-        blockSignature: raw.blockSignature ?? existing?.blockSignature ?? null,
-        blockRole: raw.blockRole ?? existing?.blockRole ?? null,
+        discoveryChannel: raw.source,
+        anchorText: raw.text ?? null,
+        anchorContext: raw.context ?? null,
+        rel: raw.rel ?? null,
+        domPath: raw.domPath ?? null,
+        blockSignature: raw.blockSignature ?? null,
+        blockRole: raw.blockRole ?? null,
       });
     };
 
     for (const row of ev.outgoingLinks ?? []) push(row);
-    for (const url of ev.outgoing ?? []) push({ url });
+    for (const url of ev.outgoing ?? []) {
+      const normalizedUrl = String(url ?? "").trim();
+      if (!normalizedUrl || fallbackUrls.has(normalizedUrl) || receipts.some((receipt) => receipt.url === normalizedUrl)) {
+        continue;
+      }
+      fallbackUrls.add(normalizedUrl);
+      push({ url: normalizedUrl });
+    }
 
-    return [...byUrl.values()];
+    return receipts;
   }
 }
 

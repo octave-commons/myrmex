@@ -163,7 +163,7 @@ These are not exempt from politeness or backpressure, but they bypass ordinary l
 
 For each fetched page:
 
-1. keep all mandatory-class edges,
+1. keep mandatory-class edges only up to `MAX_mandatory_per_page` per page and still pass them through the host-budget gate,
 2. keep top `K_page` by `followScore`,
 3. keep top `K_block` inside each block signature,
 4. keep first edges into new host/path families,
@@ -174,6 +174,7 @@ For each fetched page:
 - `K_page = min(48, ceil(sqrt(outgoing_count)) + 8)`
 - `K_block = 8` for `main_content` / `related_content`
 - `K_block = 2` for `nav` / `footer` / `promo`
+- `MAX_mandatory_per_page = min(K_page, 16)` before host-budget gating
 - `ε = 0.05` floor with decay allowed above that floor
 
 These are starting points, not immutable constants.

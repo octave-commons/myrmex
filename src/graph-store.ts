@@ -4,8 +4,8 @@ import { createHash } from "node:crypto";
 export interface GraphStoreConfig {
   openPlannerBaseUrl?: string;
   openPlannerApiKey?: string;
-  proxxBaseUrl: string;
-  authToken: string;
+  proxxBaseUrl?: string;
+  authToken?: string;
   project?: string;
   source?: string;
   openPlannerMaxEventsPerWrite?: number;
@@ -31,6 +31,11 @@ export class GraphStore {
   private lastSuccessAt = 0;
 
   constructor(config: GraphStoreConfig) {
+    const hasOpenPlannerBackend = Boolean((config.openPlannerBaseUrl ?? "").trim() && (config.openPlannerApiKey ?? "").trim());
+    const hasProxxBackend = Boolean((config.proxxBaseUrl ?? "").trim() && (config.authToken ?? "").trim());
+    if (!hasOpenPlannerBackend && !hasProxxBackend) {
+      throw new Error("GraphStore requires OPENPLANNER_BASE_URL + OPENPLANNER_API_KEY or PROXX_BASE_URL + PROXX_AUTH_TOKEN");
+    }
     this.config = config;
   }
 
@@ -269,7 +274,13 @@ export class GraphStore {
   }
 
   private async waitForWritable(): Promise<void> {
-    if (!this.hasOpenPlannerHealth()) return;
+    if (!this.hasOpenPlannerHealth()) {
+      const waitMs = this.backpressureUntilMs - Date.now();
+      if (waitMs > 0) {
+        await sleep(waitMs);
+      }
+      return;
+    }
 
     while (this.failureStreak > 0) {
       const waitMs = this.backpressureUntilMs - Date.now();
@@ -380,18 +391,22 @@ export class GraphStore {
 
   private baseUrl(): string {
     const openPlannerBaseUrl = (this.config.openPlannerBaseUrl ?? "").replace(/\/+$/, "");
-    if (openPlannerBaseUrl) return openPlannerBaseUrl;
-    return this.config.proxxBaseUrl.replace(/\/+$/, "");
+    if (openPlannerBaseUrl && (this.config.openPlannerApiKey ?? "").trim()) return openPlannerBaseUrl;
+    const proxxBaseUrl = (this.config.proxxBaseUrl ?? "").replace(/\/+$/, "");
+    if (proxxBaseUrl && (this.config.authToken ?? "").trim()) return proxxBaseUrl;
+    throw new Error("GraphStore requires a configured backend URL");
   }
 
   private authToken(): string {
     const openPlannerApiKey = (this.config.openPlannerApiKey ?? "").trim();
     if (openPlannerApiKey) return openPlannerApiKey;
-    return this.config.authToken;
+    const authToken = (this.config.authToken ?? "").trim();
+    if (authToken) return authToken;
+    throw new Error("GraphStore requires a configured backend auth token");
   }
 
   private eventsPath(): string {
-    return (this.config.openPlannerBaseUrl ?? "").trim() ? "/v1/events" : "/api/v1/lake/events";
+    return this.hasOpenPlannerHealth() ? "/v1/events" : "/api/v1/lake/events";
   }
 
   private projectName(): string {

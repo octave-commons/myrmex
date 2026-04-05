@@ -81,8 +81,8 @@ export interface MyrmexConfig {
   shuvCrawlBaseUrl: string;
   shuvCrawlToken?: string;
 
-  proxxBaseUrl: string;
-  proxxAuthToken: string;
+  proxxBaseUrl?: string;
+  proxxAuthToken?: string;
 
   openPlannerBaseUrl?: string;
   openPlannerApiKey?: string;
