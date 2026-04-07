@@ -1,4 +1,5 @@
 {
+  "extends": "../../../../../packages/config/tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2022",
     "module": "Node16",
@@ -12,8 +13,9 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "downlevelIteration": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "../graph-weaver-aco"]
+  "exclude": ["node_modules", "dist"]
 }
