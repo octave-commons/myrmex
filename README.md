@@ -2,6 +2,9 @@
 
 **Myrmex** is an ACO-guided web graph orchestrator that uses `@workspace/graph-weaver-aco` as the traversal brain and a ShuvCrawl-backed fetch backend for richer extraction.
 
+
+> Built with [GLM-5](https://z.ai) — part of the [z.ai](https://z.ai) startup ecosystem and the [Ussyverse](https://ussy.cloud).
+
 ## Reading order
 
 1. `docs/INDEX.md`
